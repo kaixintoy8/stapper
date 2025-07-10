@@ -7,116 +7,214 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
-    );
+    return MaterialApp(debugShowCheckedModeBanner: false, home: MyStepperApp());
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class MyStepperApp extends StatefulWidget {
+  const MyStepperApp({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<MyStepperApp> createState() => _MyStepperAppState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _MyStepperAppState extends State<MyStepperApp> {
+  int _aktifStep = 0;
+  String kullaniciIsmi = "", mail = "", sifre = "";
+  late List<Step> tumStepler;
+  var keyName = GlobalKey<FormFieldState>();
+  var keyMail = GlobalKey<FormFieldState>();
+  var keySifre = GlobalKey<FormFieldState>();
+  bool hata = false;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  @override
+  void initState() {
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    tumStepler = _tumStepler();
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        title: Text("Stepper Uygulaması"),
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-          ],
+      body: SingleChildScrollView(
+        child: Stepper(
+          currentStep: _aktifStep,
+          onStepTapped: (tiklananStepIndex) {
+            setState(() {
+              _aktifStep = tiklananStepIndex;
+            });
+          },
+
+          onStepContinue: () {
+            setState(() {
+              ileriButonKontrolu();
+            });
+          },
+          onStepCancel: () {
+            setState(() {
+              if (_aktifStep > 0) {
+                _aktifStep--;
+              } else {
+                _aktifStep = 0;
+              }
+            });
+          },
+          steps: _tumStepler(),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  List<Step> _tumStepler() {
+    List<Step> stepler = [
+      Step(
+        title: Text("Username Başlık"),
+        subtitle: Text("Username Altbaşlık"),
+        state: stateleriAyarla(
+          0,
+        ), // Baştaki circle ın içine hangi iconu yerleşeceğimizi belirttiğimiz yer.
+        isActive:
+            true, //true ise baştaki iconun rengini yakar, false ise gri olur.
+        content: TextFormField(
+          onSaved: (gelenName) {
+            kullaniciIsmi = gelenName!;
+          },
+          key: keyName,
+          validator: (girilenUserName) {
+            if (girilenUserName!.length < 6) {
+              return "En az 6 karakter olmalı";
+            } else {
+              return null;
+            }
+          },
+          decoration: InputDecoration(
+            labelText: "Username",
+            hintText: "Kullanıcı adı",
+            border: OutlineInputBorder(),
+          ),
+        ),
+      ),
+      Step(
+        title: Text("Mail Başlık"),
+        subtitle: Text("Mail Altbaşlık"),
+        isActive: true,
+        state: stateleriAyarla(1),
+        content: TextFormField(
+          onSaved: (gelenMail) {
+            mail = gelenMail!;
+          },
+          key: keyMail,
+          validator: (girilenMail) {
+            if (!girilenMail!.contains("@")) {
+              return "Geçerli mail giriniz";
+            } else {
+              return null;
+            }
+          },
+          decoration: InputDecoration(
+            labelText: "e-Mail",
+            hintText: "Mail giriniz",
+          ),
+        ),
+      ),
+
+      Step(
+        title: Text("Şifre Başlık"),
+        subtitle: Text("Şifre Altbaşlık"),
+        isActive: true,
+        state: stateleriAyarla(2),
+        content: TextFormField(
+          onSaved: (gelenSifre) {
+            sifre = gelenSifre!;
+          },
+          key: keySifre,
+          validator: (girilenSifre) {
+            if (girilenSifre!.length < 8) {
+              return "En az 8 karakter olmalı";
+            } else {
+              return null;
+            }
+          },
+          decoration: InputDecoration(labelText: "Password", hintText: "Şifre"),
+        ),
+      ),
+    ];
+    return stepler;
+  }
+
+  StepState stateleriAyarla(int oAnkiStep) {
+    if (_aktifStep == oAnkiStep) {
+      if (hata) {
+        return StepState.error;
+      } else {
+        return StepState.editing;
+      }
+    } else {
+      if (hata) {
+        return StepState.indexed;
+      } else {
+        return StepState.complete;
+      }
+    }
+  }
+
+  void ileriButonKontrolu() {
+    switch (_aktifStep) {
+      //0. indexin baslangıcı
+      case 0:
+        if (keyName.currentState!.validate()) {
+          keyName.currentState!.save();
+          hata = false;
+          _aktifStep = 1;
+        } else {
+          hata = true;
+        }
+        break;
+      //0. indexin bitişi
+      //1. indexin baslangıcı
+      case 1:
+        if (keyMail.currentState!.validate()) {
+          keyMail.currentState!.save();
+          hata = false;
+          _aktifStep = 2;
+        } else {
+          hata = true;
+        }
+        break;
+      //1. indexin bitişi,
+      //2. indexin baslangıcı
+      case 2:
+        if (keySifre.currentState!.validate()) {
+          keySifre.currentState!.save();
+          hata = false;
+          _aktifStep = 2;
+          formTamamlandi();
+        } else {
+          hata = true;
+        }
+        break;
+      //2. indexin bitişi
+    }
+  }
+
+  void formTamamlandi() {
+    String result =
+        "Girilen değerler: isim=> $kullaniciIsmi, email=> $mail, şifre=> $sifre";
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.indigo,
+        content: Text(
+          result,
+          style: TextStyle(color: Colors.white, fontSize: 38),
+        ),
+      ),
     );
   }
 }
